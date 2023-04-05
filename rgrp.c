@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
 
     const char *search_regex = argv[1 + arg_offset];
     const char *log_file_path = argv[2 + arg_offset];
-    const char *group_separator = (argc == 4 + arg_offset) ? argv[3 + arg_offset] : "^(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3})";
+    const char *group_separator = (argc == 4 + arg_offset) ? argv[3 + arg_offset] : "^(\\d{4}-\\d{2}-\\d{2}T\\d{2}\\:\\d{2}\\:\\d{2}\\.\\d{6}\\+\\d{4},)";
 
     FILE *log_file = fopen(log_file_path, "r");
     if (!log_file) {
