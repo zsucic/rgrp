@@ -3,7 +3,7 @@
 #include <string.h>
 #include <pcre.h>
 
-void process_log(FILE *log, const char *search_regex, const char *group_separator) {
+void process_log(FILE *log, const char *search_regex, const char *group_separator, int case_insensitive) {
     pcre *re, *search_re;
     const char *error;
     int erroffset;
@@ -17,7 +17,8 @@ void process_log(FILE *log, const char *search_regex, const char *group_separato
         return;
     }
 
-    search_re = pcre_compile(search_regex, 0, &error, &erroffset, NULL);
+    int search_options = case_insensitive ? PCRE_CASELESS : 0;
+    search_re = pcre_compile(search_regex, search_options, &error, &erroffset, NULL);
     if (!search_re) {
         printf("Search regex compilation failed at offset %d: %s\n", erroffset, error);
         return;
@@ -47,14 +48,22 @@ void process_log(FILE *log, const char *search_regex, const char *group_separato
 }
 
 int main(int argc, char **argv) {
-    if (argc < 3 || argc > 4) {
-        printf("Usage: %s <search_regex> <log_file> [group_separator_regex]\n", argv[0]);
+    if (argc < 3 || argc > 5) {
+        printf("Usage: %s [-i] <search_regex> <log_file> [group_separator_regex]\n", argv[0]);
         return 1;
     }
 
-    const char *search_regex = argv[1];
-    const char *log_file_path = argv[2];
-    const char *group_separator = (argc == 4) ? argv[3] : "^(\\d{4}-\\d{2}-\\d{2}T\\d{2}\\:\\d{2}\\:\\d{2}\\.\\d{6}\\+\\d{4},)";
+    int case_insensitive = 0;
+    int arg_offset = 0;
+
+    if (strcmp(argv[1], "-i") == 0) {
+        case_insensitive = 1;
+        arg_offset = 1;
+    }
+
+    const char *search_regex = argv[1 + arg_offset];
+    const char *log_file_path = argv[2 + arg_offset];
+    const char *group_separator = (argc == 4 + arg_offset) ? argv[3 + arg_offset] : "^(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3})";
 
     FILE *log_file = fopen(log_file_path, "r");
     if (!log_file) {
@@ -62,7 +71,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    process_log(log_file, search_regex, group_separator);
+    process_log(log_file, search_regex, group_separator, case_insensitive);
     fclose(log_file);
 
     return 0;
